@@ -65,8 +65,9 @@ struct Principal: View {
                 }.padding(15.0)
                 HStack{
                     Text("Desvio:")
-                    Text(distanciaH(besana.desvio)).dynamicTypeSize(.accessibility5
-                    )
+                    Text(
+                        Int(besana.desvio * 100).description + " cm"
+                    ).dynamicTypeSize(.accessibility5)
                 }
                 HStack{
                     Text("Mover:")
@@ -103,11 +104,18 @@ struct Principal: View {
                     Text(String(Int(besana.rumbo*10)/10))
                 }
                 HStack{
-                    Text("Num Besana:")
+                    Text("BESANA Num:")
                     Text(String(besana.nBesana))
                     //Spacer()
-                    Text("Distancia a Besana:")
+                    
+                    Text("Dist:")
                     Text(distanciaH(besana.distanciaABesana))
+
+                    Text("Pos:")
+                    Text(besana.posicionBesana)
+                    
+                    Text("Rumb:")
+                    Text(besana.rumboBesana)
                 }
                 HStack(){
                     
@@ -174,11 +182,16 @@ struct Principal: View {
                     apero: anchoApero/100
                 )
                 if (besana.moverRumbo == IZQUIERDA) {
-                    desvioIzquierda = besana.desvio/((anchoApero/2)/100)
+                    desvioIzquierda = minimo(besana.desvio, MAX_BARRA_PROGRESO)
+                        /
+                        minimo( ((anchoApero/2)/100) , MAX_BARRA_PROGRESO)
                     desvioDerecha = 0
                 }else{
                     desvioIzquierda = 0
-                    desvioDerecha = besana.desvio/((anchoApero/2)/100)
+                    desvioDerecha = minimo(besana.desvio, MAX_BARRA_PROGRESO)
+                    /
+                    minimo( ((anchoApero/2)/100) , MAX_BARRA_PROGRESO)
+                    //desvioDerecha = besana.desvio/((anchoApero/2)/100)
                 }
             }
     }

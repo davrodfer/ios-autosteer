@@ -9,6 +9,7 @@ import Foundation
 import SwiftUI
 let IZQUIERDA: String = "izquierda"
 let DERECHA: String = "derecha"
+let MAX_BARRA_PROGRESO = 1.1
 
 func noID(_ sentido: String) -> String {
     if (sentido == DERECHA){
@@ -29,6 +30,14 @@ struct Punto {
     let position: Coordenada
 }
 
+func minimo(_ A: Double, _ B: Double) -> Double {
+    if (A < B){
+        return A
+    }
+    return B
+}
+
+
 func sqrt(_ number: Double) -> Double {
     return number.squareRoot()
 }
@@ -42,13 +51,13 @@ func distanciaH(_ metros: Double) -> String {
         return String(Double(Int(metros * 1000))/10
         ) + " cm"
     }
-    if (metros < 1.5){
+    if (metros < 11){
         return String(Int(metros * 100)) + " cm"
     }
     if (metros > 1000){
-        return  String(Int(metros / 100)/10) + " km"
+        return  String(Double(Int(metros / 100))/10) + " km"
     }
-    return String(Int(metros*10)/10) + " m"
+    return String(Double(Int(metros*10)/10)) + " m"
 }
 
 
@@ -150,26 +159,25 @@ struct Besana {
     var actual: Coordenada
     var besanaA: Coordenada
     var besanaB: Coordenada
-    var longitudBesana: Double = 0.0
-    var sentidoAB: Double = 0.0
-    var sentidoBA: Double = 0.0
-    var rumbo: Double = 0.0
+    var longitudBesana: Double = 1.0
+    var sentidoAB: Double = 1.0
+    var sentidoBA: Double = 1.0
+    var rumbo: Double = 1.0
     var listado: [Punto] = []
-    var distanciaABesana: Double = 0.0
+    var distanciaABesana: Double = 1.0
     var rumboBesana: String = "AB"
-    var sentido: Double = 0.0
+    var sentido: Double = 1.0
     var origen: Coordenada
-    var desvioGrados: Double = 0.0
-    var rumboBesanaPosicion: Double = 0.0
-    var nBesana: Int = 0
-    var resto: Double = 0.0
-    var desvio: Double = 0.0
+    var desvioGrados: Double = 1.0
+    var rumboBesanaPosicion: Double = 1.0
+    var nBesana: Int = 1
+    var resto: Double = 1.0
+    var desvio: Double = 1.0
     var moverDesvio: String = ""
     var posicionBesana: String = ""
     var moverRumbo: String = ""
     
     init() {
-        //let coord:Coordenada = {Coordenada(lat: Double.random(in: 0...359), lon:Double.random(in: 0...359), alt:Double.random(in: 0...359))}()
         actual = {Coordenada(lat: Double.random(in: 0...359), lon:Double.random(in: 0...359), alt:Double.random(in: 0...359))}()
         besanaA = {Coordenada(lat: Double.random(in: 0...359), lon:Double.random(in: 0...359), alt:Double.random(in: 0...359))}()
         besanaB = {Coordenada(lat: Double.random(in: 0...359), lon:Double.random(in: 0...359), alt:Double.random(in: 0...359))}()
@@ -234,7 +242,6 @@ struct Besana {
             sentido = sentidoBA
             origen = besanaB
             desvioGrados = rumboBA
-
         }else{
             rumboBesana = "AB"
             sentido = sentidoAB
