@@ -71,7 +71,7 @@ struct Principal: View {
                 }
                 HStack{
                     Text("Mover:")
-                    Text(besana.moverRumbo).dynamicTypeSize(.accessibility2)
+                    Text(besana.moverDesvio).dynamicTypeSize(.accessibility2)
                 }
                 Spacer()
                 
@@ -115,7 +115,7 @@ struct Principal: View {
                     Text(besana.posicionBesana)
                     
                     Text("Rumb:")
-                    Text(besana.rumboBesana)
+                    Text(besana.rumboBesana )
                 }
                 HStack(){
                     

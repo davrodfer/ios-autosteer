@@ -45,19 +45,18 @@ func sqrt(_ number: Double) -> Double {
 
 func distanciaH(_ metros: Double) -> String {
     if (metros < 0.015){
-        return String(Int(metros * 1000)) + " mm"
+        return String(format: "%.0f", metros * 1000)  + " mm"
     }
     if (metros < 0.1){
-        return String(Double(Int(metros * 1000))/10
-        ) + " cm"
+        return String(format: "%.1f", metros * 100)  + " cm"
     }
     if (metros < 11){
-        return String(Int(metros * 100)) + " cm"
+        return String(format: "%.0f", metros * 100)  + " cm"
     }
     if (metros > 1000){
-        return  String(Double(Int(metros / 100))/10) + " km"
+        return String(format: "%.1f", metros/1000)  + " km"
     }
-    return String(Double(Int(metros*10)/10)) + " m"
+    return String(format: "%.1f", metros)  + " m"
 }
 
 
