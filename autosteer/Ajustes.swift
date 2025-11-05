@@ -31,6 +31,7 @@ struct Ajustes: View {
   @AppStorage("anchoApero") var anchoApero = 222
   @AppStorage("gpsServer") var gpsServer = "localhost"
   @AppStorage("gpsPort") var gpsPort = 9001
+  @AppStorage("alturaCamara") var alturaCamara = 200
 
   //@AppStorage("distanciaRestante") var distanciaRestante = false
   //@AppStorage("silenciarSonidos") var silenciarSonidos = false
@@ -72,6 +73,15 @@ struct Ajustes: View {
                 
         }.background(conectadoGPS ? Color(UIColor.green) : Color(UIColor.red))
         
+        HStack(){
+            Text("Altura camara (m):")
+            TextField("", value: $alturaCamara, formatter: formatterInt)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding()
+                .fontWeight(.bold)
+                .background(.clear)
+                .lineLimit(1)
+        }
         
     /*
             Toggle(

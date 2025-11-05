@@ -10,6 +10,7 @@ import Foundation
 import SwiftUI
 import NIOCore
 import NIOPosix
+import MapKit
 
 
 struct Principal: View {
@@ -31,7 +32,10 @@ struct Principal: View {
     @AppStorage("Lon") var Lon = 0.0
     @AppStorage("Alt") var Alt = 0.0
     @AppStorage("anchoApero") var anchoApero = 20.0
-
+    @AppStorage("alturaCamara") var alturaCamara = 200
+    
+    @State var Anterior = Coordenada(lat:0.0, lon:0.0, alt:0.0)
+    
     var datosPosicion: [String] {[
         Lat.description,
         Lon.description,
@@ -52,9 +56,73 @@ struct Principal: View {
     @AppStorage("besanaBlat") var besanaBlat = Double.random(in: 0...359)
     @AppStorage("besanaBlon") var besanaBlon = Double.random(in: 0...359)
     @AppStorage("besanaBalt") var besanaBalt = Double.random(in: 0...459)
+    
+    @State private var center = CLLocationCoordinate2D(
+        latitude: 40.4168,
+        longitude: -3.7038
+    )
+    @State private var cameraPosition: MapCameraPosition = .camera(
+        MapCamera(
+            centerCoordinate: CLLocationCoordinate2D(
+                latitude: 40.4168,
+                longitude: -3.7038
+            ),
+            distance: 80,
+            heading: 0,
+            pitch: 180
+        )
+    )
+    @State private var trackCoordinates: [CLLocationCoordinate2D] = []
+    @State private var lineAB: [CLLocationCoordinate2D] = []
+    @State private var currentLineAB: [CLLocationCoordinate2D] = []
+    @State private var currentLineABizq: [CLLocationCoordinate2D] = []
+    @State private var currentLineABder: [CLLocationCoordinate2D] = []
 
     var body: some View {
-        
+        ZStack(/*spacing: 0*/) {
+            // 3D Map integrated at top
+            Map(position: $cameraPosition) {
+                if lineAB.count >= 2 {
+                    MapPolyline(coordinates: lineAB)
+                    .stroke(.blue, lineWidth: 4)
+                    .foregroundStyle(.blue)
+                }
+                if currentLineAB.count >= 2 {
+                    MapPolyline(coordinates: currentLineAB)
+                    .stroke(.green, lineWidth: 1)
+                    .foregroundStyle(.green)
+                    MapPolyline(coordinates: currentLineABizq)
+                    .stroke(.green, lineWidth: 1)
+                    .foregroundStyle(.green)
+                    MapPolyline(coordinates: currentLineABder)
+                    .stroke(.green, lineWidth: 1)
+                    .foregroundStyle(.green)
+                }
+
+                // Dotted track polyline
+                if trackCoordinates.count >= 2 {
+                    MapPolyline(coordinates: trackCoordinates)
+                        .stroke(.red, lineWidth: 4)
+                }
+                // Current position annotation
+                if Lat != 0 || Lon != 0 {
+                    Annotation("", coordinate: CLLocationCoordinate2D(latitude: Lat, longitude: Lon)) {
+                        Circle().fill(.green).frame(width: 12, height: 12)
+                    }
+                }
+                
+            }
+            .mapStyle(.hybrid)
+            //.frame(height: 280)
+            .onAppear {
+                lineAB = [
+                    CLLocationCoordinate2D(latitude: besanaAlat, longitude: besanaAlon),
+                    CLLocationCoordinate2D(latitude: besanaBlat, longitude: besanaBlon)
+                ]
+                currentLineAB = lineAB
+            }
+            
+            // Existing content below the map
             VStack(){
                 HStack(){
                     ProgressView(value: desvioDerecha)
@@ -164,7 +232,8 @@ struct Principal: View {
                             }
                     }
                 }
-            }.onAppear {
+            }
+            .onAppear {
                 if viewDidLoad == false {
                     UIApplication.shared.isIdleTimerDisabled = true
                     viewDidLoad = true
@@ -172,16 +241,38 @@ struct Principal: View {
                     besana.besanaPuntoA(Punto: {Coordenada(lat: besanaAlat, lon: besanaAlon, alt: besanaAalt)}())
                     besana.besanaPuntoB(Punto: {Coordenada(lat: besanaBlat, lon: besanaBlon, alt: besanaBalt)}())
                 }
-            }.onChange(of: gpsURL){
-                //print("Cambia URL gps")
+            }
+            .onChange(of: gpsURL){
                 reconectaGPS = true
-                // lanzaConexionGPS()
-            }.onChange(of: datosPosicion){
+            }
+            .onChange(of: datosPosicion){
+                //----------------------
+                /*let Ahora = Coordenada(lat:Lat, lon:Lon, alt:Alt)
+                var d = distanciaLLH(Anterior, Ahora)
+                //print("Distancia a punto anterior: ", d)
+                if ((d > 2.0) && (d < 200.0)) {
+                    let sentido = bearing(Anterior, Ahora)
+                    //var nuevoPunto = Anterior
+                    while (d > 1) {
+                        Anterior = heading(Anterior, sentido, 1)
+                        d = d - 1
+                        print (
+                            "2024/11/21 06:53:09.999",
+                            Anterior.lat,
+                            Anterior.lon,
+                            Anterior.alt,
+                            "2   8   0.0607   0.0863   0.0935   0.0000   0.0000   0.0000   0.80    1.2"
+                        )
+                    }
+                }
+                Anterior = Ahora
+                */
+                //----------------------
                 besana.recalcula(
                     posicion: {Coordenada(lat:Lat, lon:Lon, alt:Alt)}(),
                     apero: anchoApero/100
                 )
-                if (besana.moverRumbo == IZQUIERDA) {
+                if (besana.moverDesvio == IZQUIERDA) {
                     desvioIzquierda = minimo(besana.desvio, MAX_BARRA_PROGRESO)
                         /
                         minimo( ((anchoApero/2)/100) , MAX_BARRA_PROGRESO)
@@ -191,9 +282,64 @@ struct Principal: View {
                     desvioDerecha = minimo(besana.desvio, MAX_BARRA_PROGRESO)
                     /
                     minimo( ((anchoApero/2)/100) , MAX_BARRA_PROGRESO)
-                    //desvioDerecha = besana.desvio/((anchoApero/2)/100)
+                }
+
+               // Pinto la besana actual en función del nBesana (numero de besana) y sus limites
+                var s = besana.sentidoAB
+                if ( sentidoGiro(besana.sentidoAB, bearing(besana.besanaA, besana.actual)) == IZQUIERDA ) {
+                    s = besana.sentidoBA
+                }
+
+                var nuevoPuntoA = heading(besana.besanaA, normalizaAngulo(s + 90), Double(besana.nBesana) * besana.anchoApero)
+                var nuevoPuntoB = heading(besana.besanaB, normalizaAngulo(s + 90), Double(besana.nBesana) * besana.anchoApero)
+                nuevoPuntoA = heading(nuevoPuntoA, besana.sentidoBA, 3000)
+                nuevoPuntoB = heading(nuevoPuntoB, besana.sentidoAB, 3000)
+                currentLineAB = [
+                    CLLocationCoordinate2D(latitude: nuevoPuntoA.lat, longitude: nuevoPuntoA.lon),
+                    CLLocationCoordinate2D(latitude: nuevoPuntoB.lat, longitude: nuevoPuntoB.lon)
+                ]
+
+                nuevoPuntoA = heading(besana.besanaA, normalizaAngulo(s + 90), Double(besana.nBesana) * besana.anchoApero + besana.anchoApero/2)
+                nuevoPuntoB = heading(besana.besanaB, normalizaAngulo(s + 90), Double(besana.nBesana) * besana.anchoApero + besana.anchoApero/2)
+                nuevoPuntoA = heading(nuevoPuntoA, besana.sentidoBA, 3000)
+                nuevoPuntoB = heading(nuevoPuntoB, besana.sentidoAB, 3000)
+                currentLineABder = [
+                    CLLocationCoordinate2D(latitude: nuevoPuntoA.lat, longitude: nuevoPuntoA.lon),
+                    CLLocationCoordinate2D(latitude: nuevoPuntoB.lat, longitude: nuevoPuntoB.lon)
+                ]
+
+                nuevoPuntoA = heading(besana.besanaA, normalizaAngulo(s + 90), Double(besana.nBesana) * besana.anchoApero - besana.anchoApero/2)
+                nuevoPuntoB = heading(besana.besanaB, normalizaAngulo(s + 90), Double(besana.nBesana) * besana.anchoApero - besana.anchoApero/2)
+                nuevoPuntoA = heading(nuevoPuntoA, besana.sentidoBA, 3000)
+                nuevoPuntoB = heading(nuevoPuntoB, besana.sentidoAB, 3000)
+                currentLineABizq = [
+                    CLLocationCoordinate2D(latitude: nuevoPuntoA.lat, longitude: nuevoPuntoA.lon),
+                    CLLocationCoordinate2D(latitude: nuevoPuntoB.lat, longitude: nuevoPuntoB.lon)
+                ]
+
+                
+                // Update track with new GPS point
+                let coord = CLLocationCoordinate2D(latitude: Lat, longitude: Lon)
+                if CLLocationCoordinate2DIsValid(coord) {
+                    if trackCoordinates.last?.latitude != coord.latitude || trackCoordinates.last?.longitude != coord.longitude {
+                        trackCoordinates.append(coord)
+                    }
+                    cameraPosition = .camera(
+                        MapCamera(
+                            centerCoordinate: coord,
+                            distance: Double(alturaCamara),
+                            heading: besana.rumbo,
+                            pitch: 45
+                            
+                        )
+                    )
                 }
             }
+            .onChange(of: besanaAlat) { _ in updateAB() }
+            .onChange(of: besanaAlon) { _ in updateAB() }
+            .onChange(of: besanaBlat) { _ in updateAB() }
+            .onChange(of: besanaBlon) { _ in updateAB() }
+        }
     }
   }
   struct Principal_Previews: PreviewProvider {
@@ -201,6 +347,15 @@ struct Principal: View {
           Principal()
       }
   }
+
+extension Principal {
+    private func updateAB() {
+        lineAB = [
+            CLLocationCoordinate2D(latitude: besanaAlat, longitude: besanaAlon),
+            CLLocationCoordinate2D(latitude: besanaBlat, longitude: besanaBlon)
+        ]
+    }
+}
 
 private final class leeGPS: ChannelInboundHandler {
     public typealias InboundIn = ByteBuffer
@@ -259,6 +414,8 @@ private final class leeGPS: ChannelInboundHandler {
                     )
                     Ratio = Double(trozos[14]) ?? 0.0
                     age = Double(trozos[13]) ?? 0.0
+                    
+                    
                     
                    //print(Error, trozos[7], trozos[8])
                     
@@ -333,6 +490,7 @@ func conectarGPS() async {
     }
     conectadoGPS = false
     print("Client closed")
-    sleep(10)
+    sleep(5)
     await conectarGPS()
 }
+

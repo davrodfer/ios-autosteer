@@ -10,7 +10,7 @@
 # Enviando datos generados con un netcat sobre un dispositivo real
 # Captura: nc -v vehiculo.local 9001 | tee -a  llh_example_data.txt
 
-RATE=0.2  # 5Hz
+RATE=0.3  # 5Hz
 PORT=9001
 
 while true ; do

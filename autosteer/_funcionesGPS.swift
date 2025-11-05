@@ -217,6 +217,9 @@ struct Besana {
             apero: Double
     ) {
         actual = posicion
+        if (longitudBesana < 1){
+            longitudBesana = 1.1
+        }
         if (apero > 0){
             anchoApero = apero
         }else{
