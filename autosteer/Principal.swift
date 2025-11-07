@@ -88,22 +88,27 @@ struct Principal: View {
                     MapPolygon(coordinates: forma)
                         .stroke(.brown, lineWidth: 1)
                         .foregroundStyle(.brown.opacity(100))
+                        .mapOverlayLevel(level: .aboveRoads)
                 }
                 if lineAB.count >= 2 {
                     MapPolyline(coordinates: lineAB)
                     .stroke(.blue, lineWidth: 4)
                     .foregroundStyle(.blue)
+                    .mapOverlayLevel(level: .aboveLabels)
                 }
                 if currentLineAB.count >= 2 {
                     MapPolyline(coordinates: currentLineAB)
                     .stroke(.green, lineWidth: 1)
                     .foregroundStyle(.green)
+                    .mapOverlayLevel(level: .aboveLabels)
                     MapPolyline(coordinates: currentLineABizq)
                     .stroke(.green, lineWidth: 1)
                     .foregroundStyle(.green)
+                    .mapOverlayLevel(level: .aboveLabels)
                     MapPolyline(coordinates: currentLineABder)
                     .stroke(.green, lineWidth: 1)
                     .foregroundStyle(.green)
+                    .mapOverlayLevel(level: .aboveLabels)
                 }
 
                 // Current position annotation
@@ -333,13 +338,11 @@ struct Principal: View {
                     )
                 }
             }
-            .onChange(of: besanaAlat) { updateAB() }
-            .onChange(of: besanaAlon) { updateAB() }
-            .onChange(of: besanaBlat) { updateAB() }
-            .onChange(of: besanaBlon) { updateAB() }
+            .onChange(of: [ besanaAlat, besanaAlon, besanaBlat, besanaBlon ]) { updateAB() }
         }
     }
   }
+
   struct Principal_Previews: PreviewProvider {
       static var previews: some View {
           Principal()
