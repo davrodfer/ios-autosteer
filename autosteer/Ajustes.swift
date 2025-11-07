@@ -32,9 +32,6 @@ struct Ajustes: View {
   @AppStorage("gpsServer") var gpsServer = "localhost"
   @AppStorage("gpsPort") var gpsPort = 9001
   @AppStorage("alturaCamara") var alturaCamara = 200
-
-  //@AppStorage("distanciaRestante") var distanciaRestante = false
-  //@AppStorage("silenciarSonidos") var silenciarSonidos = false
   
   var body: some View {
     VStack {
