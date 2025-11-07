@@ -333,10 +333,10 @@ struct Principal: View {
                     )
                 }
             }
-            .onChange(of: besanaAlat) { _ in updateAB() }
-            .onChange(of: besanaAlon) { _ in updateAB() }
-            .onChange(of: besanaBlat) { _ in updateAB() }
-            .onChange(of: besanaBlon) { _ in updateAB() }
+            .onChange(of: besanaAlat) { updateAB() }
+            .onChange(of: besanaAlon) { updateAB() }
+            .onChange(of: besanaBlat) { updateAB() }
+            .onChange(of: besanaBlon) { updateAB() }
         }
     }
   }
