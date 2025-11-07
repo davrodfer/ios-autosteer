@@ -35,7 +35,7 @@ struct Principal: View {
     @AppStorage("alturaCamara") var alturaCamara = 200
     
     @State var puntoAnterior = Coordenada(lat:0.0, lon:0.0, alt:0.0)
-    @State var rumboAnterior = 1.1
+    //@State var rumboAnterior = 1.1
     
     var datosPosicion: [String] {[
         Lat.description,
@@ -78,33 +78,17 @@ struct Principal: View {
     @State private var currentLineAB: [CLLocationCoordinate2D] = []
     @State private var currentLineABizq: [CLLocationCoordinate2D] = []
     @State private var currentLineABder: [CLLocationCoordinate2D] = []
-    @State private var rectangulos: [[CLLocationCoordinate2D]] = []
+    // @State private var rectangulos: [[CLLocationCoordinate2D]] = []
+    @State private var forma: [CLLocationCoordinate2D] = []
     
     var body: some View {
         ZStack(/*spacing: 0*/) {
-            // 3D Map integrated at top
             Map(position: $cameraPosition) {
-                // Dotted track polyline
-                //if trackCoordinates.count >= 2 {
-                    //MapPolyline(coordinates: trackCoordinates).stroke(.red, lineWidth: 4)
-                /*
-                while (rectangulos.count > 0) {
-                    MapPolygon(coordinates: rectangulos[0])
+                if forma.count >= 5 {
+                    MapPolygon(coordinates: forma)
                         .stroke(.brown, lineWidth: 1)
                         .foregroundStyle(.brown.opacity(100))
-                    rectangulos.removeFirst()
                 }
-                */
-                 if rectangulos.count >= 1 {
-                    ForEach(rectangulos.indices, id: \.self) { idx in
-                        MapPolygon(coordinates: rectangulos[idx])
-                            .stroke(.brown, lineWidth: 1)
-                            .foregroundStyle(.brown.opacity(100))
-                        //rectangulos[idx][0].latitude=0
-                        //rectangulos[idx][0].longitude=0
-                    }
-                }
-
                 if lineAB.count >= 2 {
                     MapPolyline(coordinates: lineAB)
                     .stroke(.blue, lineWidth: 4)
@@ -264,62 +248,27 @@ struct Principal: View {
                 reconectaGPS = true
             }
             .onChange(of: datosPosicion){
-                //----------------------
-                /*let Ahora = Coordenada(lat:Lat, lon:Lon, alt:Alt)
-                var d = distanciaLLH(Anterior, Ahora)
-                //print("Distancia a punto anterior: ", d)
-                if ((d > 2.0) && (d < 200.0)) {
-                    let sentido = bearing(Anterior, Ahora)
-                    //var nuevoPunto = Anterior
-                    while (d > 1) {
-                        Anterior = heading(Anterior, sentido, 1)
-                        d = d - 1
-                        print (
-                            "2024/11/21 06:53:09.999",
-                            Anterior.lat,
-                            Anterior.lon,
-                            Anterior.alt,
-                            "2   8   0.0607   0.0863   0.0935   0.0000   0.0000   0.0000   0.80    1.2"
-                        )
-                    }
-                }
-                Anterior = Ahora
-                */
-                //----- Añado rectangulo a la ruta ------
                 let Ahora = Coordenada(lat:Lat, lon:Lon, alt:Alt)
                 let d = distanciaLLH(puntoAnterior, Ahora)
                 if (d > 2) && (d < 40){
                     // Solo añado un nuevo elemento si es mayor de una cantidad de metros
-                    // Crea las 4 esquinas según el centro y el tamaño
                     let A = heading(Ahora, normalizaAngulo(besana.rumbo + 90), besana.anchoApero / 2)
                     let B = heading(Ahora, normalizaAngulo(besana.rumbo - 90), besana.anchoApero / 2)
-                    let C = heading(puntoAnterior, normalizaAngulo(rumboAnterior - 90), besana.anchoApero / 2)
-                    let D = heading(puntoAnterior, normalizaAngulo(rumboAnterior + 90), besana.anchoApero / 2)
-                    let rect = [
-                        CLLocationCoordinate2D(latitude: A.lat, longitude: A.lon),
-                        CLLocationCoordinate2D(latitude: B.lat, longitude: B.lon),
-                        CLLocationCoordinate2D(latitude: C.lat, longitude: C.lon),
-                        CLLocationCoordinate2D(latitude: D.lat, longitude: D.lon),
-                        CLLocationCoordinate2D(latitude: A.lat, longitude: A.lon)
-                    ]
-                    rectangulos.append(rect)
                     puntoAnterior = Ahora
-                    rumboAnterior = besana.rumbo
+                    if (forma.count < 3 ){
+                        forma.append(CLLocationCoordinate2D(latitude: A.lat, longitude: A.lon))
+                        forma.append(CLLocationCoordinate2D(latitude: B.lat, longitude: B.lon))
+                        forma.append(forma[0])
+                    }else{
+                        let centro = forma.count / 2
+                        forma.insert(CLLocationCoordinate2D(latitude: A.lat, longitude: A.lon), at: centro + 1)
+                        forma.insert(CLLocationCoordinate2D(latitude: B.lat, longitude: B.lon), at: centro + 1)
+                    }
                 }else if (d >= 40){
                     puntoAnterior = Ahora
-                    rumboAnterior = besana.rumbo
+                    //rumboAnterior = besana.rumbo
                 }
                 
-                let maxElementos = 100
-                while rectangulos.count > maxElementos {
-                    rectangulos.removeFirst()
-                }
-                /*
-                while (rectangulos[0][0].latitude == 0) &&
-                        (rectangulos[0][0].longitude == 0) {
-                    rectangulos.removeFirst()
-                }
-                 */
                 //---------------------------------------
                 besana.recalcula(
                     posicion: {Coordenada(lat:Lat, lon:Lon, alt:Alt)}(),
@@ -374,18 +323,12 @@ struct Principal: View {
                 // Update track with new GPS point
                 let coord = CLLocationCoordinate2D(latitude: Lat, longitude: Lon)
                 if CLLocationCoordinate2DIsValid(coord) {
-                    /*
-                     if trackCoordinates.last?.latitude != coord.latitude || trackCoordinates.last?.longitude != coord.longitude {
-                        trackCoordinates.append(coord)
-                    }
-                     */
                     cameraPosition = .camera(
                         MapCamera(
                             centerCoordinate: coord,
                             distance: Double(alturaCamara),
                             heading: besana.rumbo,
                             pitch: 45
-                            
                         )
                     )
                 }
@@ -428,7 +371,6 @@ private final class leeGPS: ChannelInboundHandler {
 
     @AppStorage("reconectaGPS") var reconectaGPS = false
 
-
     public func channelActive(context: ChannelHandlerContext) {
         print("Client connected to \(context.remoteAddress?.description ?? "unknown")")
     }
@@ -469,24 +411,7 @@ private final class leeGPS: ChannelInboundHandler {
                     )
                     Ratio = Double(trozos[14]) ?? 0.0
                     age = Double(trozos[13]) ?? 0.0
-                    
-                    
-                    
-                   //print(Error, trozos[7], trozos[8])
-                    
-                    /*
-                     print (trozos[0], trozos[1],
-                     "Lat:", trozos[2], "Lon:", trozos[3], "Alt:", trozos[4]
-                     ,"Calidad:", calidad
-                     ,"Satelites:", trozos[6]
-                     ,"Lat_e:", trozos[7]
-                     ,"Lon_e:", trozos[8]
-                     ,"Alt_e:", trozos[9]
-                     ,"age:", trozos[13]
-                     ,"ratio:", trozos[14]
-                     )
-                     */
-                    //print(trozos)
+
                 }
             }
         }else{
