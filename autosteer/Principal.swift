@@ -19,6 +19,7 @@ struct Principal: View {
     @State private var isPresentingConfirmA: Bool = false
     @State private var isPresentingConfirmB: Bool = false
 
+    @AppStorage("PintarTraza") var PintarTraza = true
     @AppStorage("gpsServer") var gpsServer = "localhost"
     @AppStorage("gpsPort") var gpsPort = 9001
     @AppStorage("reconectaGPS") var reconectaGPS = false
@@ -35,7 +36,6 @@ struct Principal: View {
     @AppStorage("alturaCamara") var alturaCamara = 200
     
     @State var puntoAnterior = Coordenada(lat:0.0, lon:0.0, alt:0.0)
-    //@State var rumboAnterior = 1.1
     
     var datosPosicion: [String] {[
         Lat.description,
@@ -73,19 +73,18 @@ struct Principal: View {
             pitch: 180
         )
     )
-    //@State private var trackCoordinates: [CLLocationCoordinate2D] = []
     @State private var lineAB: [CLLocationCoordinate2D] = []
     @State private var currentLineAB: [CLLocationCoordinate2D] = []
     @State private var currentLineABizq: [CLLocationCoordinate2D] = []
     @State private var currentLineABder: [CLLocationCoordinate2D] = []
-    // @State private var rectangulos: [[CLLocationCoordinate2D]] = []
-    @State private var forma: [CLLocationCoordinate2D] = []
+    @State private var traza: [CLLocationCoordinate2D] = []
+    @AppStorage("BorrarTraza") var BorrarTraza = false
     
     var body: some View {
         ZStack(/*spacing: 0*/) {
             Map(position: $cameraPosition) {
-                if forma.count >= 5 {
-                    MapPolygon(coordinates: forma)
+                if traza.count >= 5 {
+                    MapPolygon(coordinates: traza)
                         .stroke(.brown, lineWidth: 1)
                         .foregroundStyle(.brown.opacity(100))
                         .mapOverlayLevel(level: .aboveRoads)
@@ -260,14 +259,16 @@ struct Principal: View {
                     let A = heading(Ahora, normalizaAngulo(besana.rumbo + 90), besana.anchoApero / 2)
                     let B = heading(Ahora, normalizaAngulo(besana.rumbo - 90), besana.anchoApero / 2)
                     puntoAnterior = Ahora
-                    if (forma.count < 3 ){
-                        forma.append(CLLocationCoordinate2D(latitude: A.lat, longitude: A.lon))
-                        forma.append(CLLocationCoordinate2D(latitude: B.lat, longitude: B.lon))
-                        forma.append(forma[0])
-                    }else{
-                        let centro = forma.count / 2
-                        forma.insert(CLLocationCoordinate2D(latitude: A.lat, longitude: A.lon), at: centro + 1)
-                        forma.insert(CLLocationCoordinate2D(latitude: B.lat, longitude: B.lon), at: centro + 1)
+                    if (PintarTraza){
+                        if (traza.count < 3 ){
+                            traza.append(CLLocationCoordinate2D(latitude: A.lat, longitude: A.lon))
+                            traza.append(CLLocationCoordinate2D(latitude: B.lat, longitude: B.lon))
+                            traza.append(traza[0])
+                        }else{
+                            let centro = traza.count / 2
+                            traza.insert(CLLocationCoordinate2D(latitude: A.lat, longitude: A.lon), at: centro + 1)
+                            traza.insert(CLLocationCoordinate2D(latitude: B.lat, longitude: B.lon), at: centro + 1)
+                        }
                     }
                 }else if (d >= 40){
                     puntoAnterior = Ahora
@@ -339,6 +340,12 @@ struct Principal: View {
                 }
             }
             .onChange(of: [ besanaAlat, besanaAlon, besanaBlat, besanaBlon ]) { updateAB() }
+            .onChange(of: BorrarTraza){
+                if (BorrarTraza){
+                    traza = []
+                    BorrarTraza = false
+                }
+            }
         }
     }
   }
