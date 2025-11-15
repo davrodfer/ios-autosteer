@@ -483,4 +483,3 @@ func conectarGPS() async {
     sleep(5)
     await conectarGPS()
 }
-
